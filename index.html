@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Timbangan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .card {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #333;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-control {
+            background-color: #2c2c2c;
+            color: #ffffff;
+            border: 1px solid #444;
+        }
+
+        .form-control::placeholder {
+            color: #888;
+        }
+
+        .form-label {
+            color: #ffffff;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5 d-flex justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h5 class="mt-2">Kalkulator Timbangan</h5>
+                    <div class="d-flex justify-content-between">
+                        <div class="mb-3 mt-3 me-2">
+                            <label for="inputHarga" class="form-label">Masukkan harga/Kwintal</label>
+                            <input type="text" class="form-control" id="inputHarga" placeholder="Masukkan harga"
+                                oninput="formatRupiah(this)">
+                        </div>
+                        <div class="mb-3 mt-3 ms-2">
+                            <label for="inputNamaPemilik" class="form-label">Masukkan Nama Pemilik</label>
+                            <input type="text" class="form-control" id="inputNamaPemilik" placeholder="Nama Pemilik">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="calculatorForm">
+                        <div class="mb-3">
+                            <label for="inputKilogram1" class="form-label">Berat 1</label>
+                            <input type="number" class="form-control" id="inputKilogram1"
+                                placeholder="Masukkan berat dalam kilogram" oninput="updateResult(1)">
+                        </div>
+                    </form>
+                    <div class="mt-3">
+                        <h5>Total karung:</h5>
+                        <p id="totalInput"></p>
+                    </div>
+                    <div class="mt-3">
+                        <h5>Total Berat:</h5>
+                        <p id="result"></p>
+                    </div>
+                    <div class="mt-3">
+                        <h5>Total Harga:</h5>
+                        <p id="totalHarga"></p>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="printPDF()">Print</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let inputCount = 1;
+            function updateResult(index) {
+                var totalKilogram = 0;
+                var validInputCount = 0;
+                for (let i = 1; i <= inputCount; i++) {
+                    var kilogram = parseFloat(document.getElementById('inputKilogram' + i).value) || 0;
+                    if (kilogram > 0) {
+                        totalKilogram += kilogram;
+                        validInputCount++;
+                    }
+                }
+                document.getElementById('result').innerText = totalKilogram + ' Kg';
+
+                var harga = parseFloat(document.getElementById('inputHarga').value.replace(/[^0-9,-]+/g, "")) || 0;
+                var totalHarga = (totalKilogram / 100) * harga;
+                document.getElementById('totalHarga').innerText = 'Rp ' + totalHarga.toLocaleString('id-ID');
+
+                // Tambahkan input baru jika input saat ini sudah terisi
+                if (document.getElementById('inputKilogram' + index).value !== "" && index === inputCount) {
+                    inputCount++;
+                    var newInputDiv = document.createElement('div');
+                    newInputDiv.className = 'mb-3';
+                    newInputDiv.innerHTML = `
+          <label for="inputKilogram${inputCount}" class="form-label">Berat ${inputCount}</label>
+          <input type="number" class="form-control" id="inputKilogram${inputCount}" placeholder="Masukkan berat dalam kilogram" oninput="updateResult(${inputCount})">
+        `;
+                    document.getElementById('calculatorForm').appendChild(newInputDiv);
+                }
+
+                // Update total input count
+                document.getElementById('totalInput').innerText = validInputCount + ' Karung';
+            }
+
+            function formatRupiah(input) {
+                var angka = input.value.replace(/[^0-9]/g, '');
+                var rupiah = '';
+                var angkarev = angka.toString().split('').reverse().join('');
+                for (var i = 0; i < angkarev.length; i++) {
+                    if (i % 3 == 0) rupiah += angkarev.substr(i, 3) + '.';
+                }
+                input.value = 'Rp ' + rupiah.split('', rupiah.length - 1).reverse().join('');
+                updateResult(1);
+            }
+
+            function printPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                const harga = document.getElementById('inputHarga').value;
+                const namaPemilik = document.getElementById('inputNamaPemilik').value;
+                const totalInput = document.getElementById('totalInput').innerText;
+                const totalBerat = document.getElementById('result').innerText;
+                const totalHarga = document.getElementById('totalHarga').innerText;
+
+                doc.text(`Harga/Kwintal: ${harga}`, 10, 10);
+                doc.text(`Nama Pemilik: ${namaPemilik}`, 10, 20);
+                doc.text(`Total Karung: ${totalInput}`, 10, 30);
+                doc.text(`Total Berat: ${totalBerat}`, 10, 40);
+                doc.text(`Total Harga: ${totalHarga}`, 10, 50);
+
+                doc.text(`----------------------------------------------------------------------------------------`, 10, 60);
+                doc.text(`Detail Berat/Karung: `, 10, 70);
+                let yPosition = 80;
+                for (let i = 1; i <= inputCount; i++) {
+                    const kilogram = document.getElementById('inputKilogram' + i).value;
+                    if (kilogram) {
+                        doc.text(`Berat Karung ke-${i}: ${kilogram} kg`, 10, yPosition);
+                        yPosition += 10;
+                    }
+                }
+
+                const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
+                const now = new Date();
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0'); // Januari adalah 0!
+                const year = now.getFullYear();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const formattedTimestamp = `${day}-${month}-${year}_${hours}:${minutes}:${seconds}`;
+                doc.save(`hasil_kalkulator_timbangan_${formattedTimestamp}_${namaPemilik}.pdf`);
+            }
+        </script>
+    </div>
+    <footer class="text-center mt-4">
+        <p>&copy; 2024 Kalkulator Timbangan. dibuat oleh <a href="https://whoami-ky.netlify.app/"
+                style="text-decoration: none;">Roki Hendrawan</a></p>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
