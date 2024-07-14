@@ -154,7 +154,7 @@
                     }
                 }
 
-                const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
+                const timestamp = new Date().toISOString().replace(/[-.]/g, "");
                 const now = new Date();
                 const day = String(now.getDate()).padStart(2, '0');
                 const month = String(now.getMonth() + 1).padStart(2, '0'); // Januari adalah 0!
@@ -162,8 +162,8 @@
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 const seconds = String(now.getSeconds()).padStart(2, '0');
-                const formattedTimestamp = `${day}-${month}-${year}_${hours}:${minutes}:${seconds}`;
-                doc.save(`hasil_kalkulator_timbangan_${formattedTimestamp}_${namaPemilik}.pdf`);
+                const formattedTimestamp = `${day}-${month}-${year}_${hours}${minutes}${seconds}`;
+                doc.save(`hasil_kalkulator_timbangan_${namaPemilik}_${formattedTimestamp}.pdf`);
             }
         </script>
     </div>
